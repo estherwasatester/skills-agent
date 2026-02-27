@@ -2,10 +2,56 @@ import { FunctionTool } from '@google/adk';
 import { z } from 'zod';
 import { exec } from 'child_process';
 import { promisify } from 'util';
-import path from 'path';
-import fs from 'fs';
 
 const execAsync = promisify(exec);
+
+export const searchAgentSkills = new FunctionTool({
+    name: 'search_agent_skills',
+    description: 'Searches a GitHub repository to find available agent skills. Use this to discover what skills are available before trying to add them.',
+    parameters: z.object({
+        repositoryUrl: z.string().describe('The GitHub repository URL, e.g. https://github.com/firebase/agent-skills'),
+    }),
+    execute: async ({ repositoryUrl }) => {
+        const allowedPrefixes = [
+            'https://github.com/firebase/',
+            'https://github.com/GoogleCloudPlatform/',
+        ];
+        if (!allowedPrefixes.some((prefix) => repositoryUrl.startsWith(prefix))) {
+            return { success: false, message: `Error: Must be from a verified source.` };
+        }
+
+        try {
+            const match = repositoryUrl.match(/github\.com\/([^\/]+)\/([^\/]+)/);
+            if (!match) return { success: false, message: 'Invalid GitHub URL format.' };
+            const owner = match[1];
+            const repo = match[2].replace(/\.git$/, '');
+
+            let response = await fetch(`https://api.github.com/repos/${owner}/${repo}/contents/skills`, {
+                headers: { 'Accept': 'application/vnd.github.v3+json', 'User-Agent': 'skills-agent' }
+            });
+
+            let basePath = 'skills/';
+            if (!response.ok) {
+                response = await fetch(`https://api.github.com/repos/${owner}/${repo}/contents`, {
+                    headers: { 'Accept': 'application/vnd.github.v3+json', 'User-Agent': 'skills-agent' }
+                });
+                basePath = '';
+            }
+
+            if (!response.ok) return { success: false, message: `Failed to fetch: ${response.statusText}` };
+            const data = await response.json();
+            const skills = data.filter((item: any) => item.type === 'dir' && !item.name.startsWith('.')).map((item: any) => item.name);
+
+            return {
+                success: true,
+                message: `Found the following skills in ${basePath || 'root'}: ${skills.join(', ')}`,
+                skills
+            };
+        } catch (error: any) {
+            return { success: false, message: `Failed to search: ${error.message}` };
+        }
+    }
+});
 
 export const addAgentSkills = new FunctionTool({
     name: 'add_agent_skills',
@@ -33,27 +79,19 @@ export const addAgentSkills = new FunctionTool({
         try {
             console.log(`Adding skill '${skillName}' from ${repositoryUrl}...`);
 
-            // 2. Execute `npx skills add` non-interactively
-            const command = `npx skills add ${repositoryUrl} --skill ${skillName} --yes --scope project --method symlink`;
+            // 2. Execute `gemini skills install` non-interactively
+            const repo = repositoryUrl.endsWith('.git') ? repositoryUrl : `${repositoryUrl}.git`;
+            // Check if skillName already contains the path
+            const skillPath = skillName.includes('/') ? skillName : `skills/${skillName}`;
+            const command = `gemini skills install ${repo} --path ${skillPath} --consent --scope workspace`;
             const { stdout, stderr } = await execAsync(command);
 
             console.log(stdout);
             if (stderr) console.error(stderr);
 
-            const defaultSkillPath = path.join(process.cwd(), '.gemini', 'skills');
-            const targetSkillPath = path.join(process.cwd(), 'Skills');
-
-            if (!fs.existsSync(targetSkillPath)) {
-                fs.mkdirSync(targetSkillPath, { recursive: true });
-            }
-
-            if (fs.existsSync(defaultSkillPath)) {
-                fs.cpSync(defaultSkillPath, targetSkillPath, { recursive: true });
-            }
-
             return {
                 success: true,
-                message: `Successfully added skill ${skillName} from ${repositoryUrl}. Files are available in the ./Skills directory.`,
+                message: `Successfully added skill ${skillName} from ${repositoryUrl}.`,
                 details: stdout
             };
 

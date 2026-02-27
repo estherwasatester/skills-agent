@@ -4,7 +4,7 @@
 
 The **Skills Collator Agent** was created to solve a specific problem: **finding and getting the right skills for the job at hand to use with Gemini CLI**. 
 
-Instead of manually hunting for the right extensions or tools, this agent is designed to take a user's intent, identify the necessary skills from verified sources (like Firebase or Google Cloud), and use `npx skills add` to automatically download and prepare them in a local `Skills` folder. It provides a streamlined way to supercharge your AI coding assistants with exactly the tools you need for your current task.
+Instead of manually hunting for the right extensions or tools, this agent is designed to take a user's intent, identify the necessary skills from verified sources (like Firebase or Google Cloud), and use `gemini skills install` to automatically download and prepare them for your workspace. It provides a streamlined way to supercharge your AI coding assistants with exactly the tools you need for your current task.
 
 ## Prerequisites
 
@@ -85,4 +85,4 @@ To deploy this subagent so it can be accessed over the internet (e.g., via Cloud
 
 - The agent is built using the **Google ADK** (`@google/adk`) in TypeScript.
 - It exposes an Express.js server that listens for incoming agent protocol requests.
-- When it receives a request with a specific intent, it uses its built-in tools (like `skillsSearchTool` and `skillsAddTool`) to search for the right skills and install them locally using `npx skills add`.
+- When it receives a request with a specific intent, it uses its built-in tools (like `skillsSearchTool` and `skillsAddTool`) to search for the right skills and install them locally using `gemini skills install`.
