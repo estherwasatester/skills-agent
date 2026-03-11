@@ -86,6 +86,10 @@ export const addAgentSkills = new FunctionTool({
             const command = `gemini skills install ${repo} --path ${skillPath} --consent --scope workspace`;
             const { stdout, stderr } = await execAsync(command);
 
+            // Rename / Move the contents from .gemini to .agents
+            await execAsync(`mkdir -p .agents/skills && mv .gemini/skills/* .agents/skills/ 2>/dev/null || true`);
+            await execAsync(`rm -rf .gemini`);
+
             console.log(stdout);
             if (stderr) console.error(stderr);
 

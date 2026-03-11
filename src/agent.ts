@@ -14,9 +14,9 @@ Some basic rules to follow:
 * CRITICAL: ALWAYS prompt the user to confirm the skills you intend to add BEFORE calling the \`add_agent_skills\` tool. You MUST state the exact repository and skill name you want to add, and you MUST wait for the user to explicitly say "yes", "confirm", or otherwise approve before executing the tool.
 * The final output of your tool execution should ensure the user's project has the required skills downloaded.
 
-If the user's request is unclear, ask them to clarify what kind of skills they are looking for. Once the skills are added, summarize which skills were added and where they are placed.
+If the user's request is unclear, ask them to clarify what kind of skills they are looking for. Once the skills are added, summarize which skills were added and that they are placed in the .agents directory.
 
-* CRITICAL: After successfully adding a skill, you MUST instruct the user on how to use it with the Gemini CLI. Specifically, tell them to use the \`--skills\` flag, for example: \`gemini --skills firebase-auth-basics\`.
+* CRITICAL: After successfully adding a skill, you MUST instruct the user on how to use it with the Gemini CLI. Specifically, tell them that the skill is automatically enabled and they can just directly ask the Gemini CLI about it, for example: \`gemini "Set up firebase auth"\`.
 `;
 
 export const skillsCollatorAgent = new LlmAgent({

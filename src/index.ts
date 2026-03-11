@@ -1,23 +1,26 @@
+// Experimental A2A implementation. Doesn't actually work and needs refactoring.
+// Waiting on https://github.com/google-gemini/gemini-cli/pull/21496.
+
 import 'dotenv/config';
 import express from 'express';
 import { v4 as uuidv4 } from 'uuid';
-import { 
-    AgentCard, 
-    Message, 
-    AGENT_CARD_PATH 
+import {
+    AgentCard,
+    Message,
+    AGENT_CARD_PATH
 } from '@a2a-js/sdk';
-import { 
-    AgentExecutor, 
-    RequestContext, 
-    ExecutionEventBus, 
-    DefaultRequestHandler, 
-    InMemoryTaskStore 
+import {
+    AgentExecutor,
+    RequestContext,
+    ExecutionEventBus,
+    DefaultRequestHandler,
+    InMemoryTaskStore
 } from '@a2a-js/sdk/server';
-import { 
-    agentCardHandler, 
-    jsonRpcHandler, 
-    restHandler, 
-    UserBuilder 
+import {
+    agentCardHandler,
+    jsonRpcHandler,
+    restHandler,
+    UserBuilder
 } from '@a2a-js/sdk/server/express';
 import { Runner, InMemorySessionService } from '@google/adk';
 import { skillsCollatorAgent } from './agent';
@@ -31,7 +34,7 @@ const runner = new Runner({
 class ADKExecutor implements AgentExecutor {
     async execute(requestContext: RequestContext, eventBus: ExecutionEventBus): Promise<void> {
         const { contextId, userMessage } = requestContext;
-        
+
         // Map A2A message to ADK message format
         const adkMessage = {
             parts: userMessage.parts.map(p => {
